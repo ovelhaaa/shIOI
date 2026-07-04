@@ -1,0 +1,38 @@
+name: Build JUCE Plugin
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build_plugin:
+    name: Build Plugin on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev libxcursor-dev libxrandr-dev
+
+    - name: Configure CMake
+      # Note que usamos -S platform_juce para garantir que APENAS o plugin seja compilado
+      run: cmake -B build -S platform_juce -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build Plugin
+      run: cmake --build build --config Release
+
+    - name: Upload VST3 Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: shIOI_Plugin-${{ runner.os }}-VST3
+        path: build/**/*_artefacts/**/VST3/*.vst3
