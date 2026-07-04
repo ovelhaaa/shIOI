@@ -4,17 +4,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sh101AudioProcessor::createP
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
     // Parâmetros do filtro
-    layout.add(std::make_unique<juce::AudioParameterFloat>("cutoff", "Cutoff", 0.0f, 1.0f, 0.5f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("resonance", "Resonance", 0.0f, 1.0f, 0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("cutoff", 1), "Cutoff", 0.0f, 1.0f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("resonance", 1), "Resonance", 0.0f, 1.0f, 0.2f));
     
     // Parâmetros de VCA/Master
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterVol", "Master Volume", 0.0f, 1.0f, 0.8f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterVol", 1), "Master Volume", 0.0f, 1.0f, 0.8f));
     
     // Parâmetros do Envelope
-    layout.add(std::make_unique<juce::AudioParameterFloat>("attack", "Attack", 0.001f, 5.0f, 0.01f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("decay", "Decay", 0.001f, 5.0f, 0.2f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("sustain", "Sustain", 0.0f, 1.0f, 0.5f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("release", "Release", 0.001f, 5.0f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("attack", 1), "Attack", 0.001f, 5.0f, 0.01f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("decay", 1), "Decay", 0.001f, 5.0f, 0.2f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("sustain", 1), "Sustain", 0.0f, 1.0f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("release", 1), "Release", 0.001f, 5.0f, 0.5f));
 
     return layout;
 }
