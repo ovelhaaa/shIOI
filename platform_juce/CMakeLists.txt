@@ -45,3 +45,8 @@ target_sources(shIOI_Plugin PRIVATE
     Source/PluginProcessor.cpp 
     Source/PluginProcessor.h
 )
+
+# Fix missing VST2 SDK headers by disabling VST2 compatibility in VST3
+target_compile_definitions(shIOI_Plugin PUBLIC
+    JUCE_VST3_CAN_REPLACE_VST2=0
+)
