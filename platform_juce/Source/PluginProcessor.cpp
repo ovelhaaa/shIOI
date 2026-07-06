@@ -25,7 +25,7 @@ Sh101AudioProcessor::Sh101AudioProcessor()
 {
 }
 
-void Sh101AudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
+void Sh101AudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
     for (auto& voice : voices) {
         voice.init((float)sampleRate);
     }
@@ -58,7 +58,7 @@ void Sh101AudioProcessor::handleMidi(juce::MidiBuffer& midiMessages) {
             // Alocação simplificada buscando primeira voz inativa
             for (auto& voice : voices) {
                 if (!voice.isActive && !voice.envelope.isActive()) {
-                    float freq = (float)msg.getMidiNoteInHertz();
+                    float freq = (float)juce::MidiMessage::getMidiNoteInHertz(msg.getNoteNumber());
                     voice.noteOn(msg.getNoteNumber(), msg.getFloatVelocity(), freq);
                     break;
                 }

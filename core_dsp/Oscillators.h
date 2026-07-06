@@ -147,8 +147,6 @@ namespace core_dsp::oscillator
 
     inline SampleType ModLFO::getSine()
     {
-        uint32_t p = phase.getCurrentPhase();
-        
         // Simple sine approximation using triangle wave with shaping
         SampleType tri = getTriangle();
         
