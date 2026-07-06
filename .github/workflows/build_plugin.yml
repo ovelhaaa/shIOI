@@ -36,3 +36,9 @@ jobs:
       with:
         name: shIOI_Plugin-${{ runner.os }}-VST3
         path: build/**/*_artefacts/**/*.vst3
+
+    - name: Upload Standalone Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: shIOI_Plugin-${{ runner.os }}-Standalone
+        path: build/**/*_artefacts/**/Standalone/
