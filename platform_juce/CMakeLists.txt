@@ -44,6 +44,8 @@ target_include_directories(shIOI_Plugin PRIVATE Source)
 target_sources(shIOI_Plugin PRIVATE 
     Source/PluginProcessor.cpp 
     Source/PluginProcessor.h
+    Source/PluginEditor.cpp
+    Source/PluginEditor.h
 )
 
 # Fix missing VST2 SDK headers by disabling VST2 compatibility in VST3

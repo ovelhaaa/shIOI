@@ -25,8 +25,8 @@ public:
     void releaseResources() override {}
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     
-    juce::AudioProcessorEditor* createEditor() override { return nullptr; } // Retorna nulo se usarmos UI genérica por agora
-    bool hasEditor() const override { return false; }
+    juce::AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override { return true; }
 
     const juce::String getName() const override { return "shIOI"; }
     bool acceptsMidi() const override { return true; }
@@ -97,13 +97,32 @@ private:
     std::array<Voice, NUM_VOICES> voices;
     
     // Gerenciamento de Parâmetros
+public:
     juce::AudioProcessorValueTreeState apvts;
+private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
-    // Smoothers para prevenir Clicks e Zipper Noise
+    // Global LFO (Para PWM e outras modulações)
+    core_dsp::oscillator::ModLFO modLfo;
+    
+    // Smoothers para prevenir Clicks e Zipper Noise (Atualização Sample-a-Sample)
     juce::LinearSmoothedValue<float> s_cutoff {0.5f};
     juce::LinearSmoothedValue<float> s_resonance {0.2f};
     juce::LinearSmoothedValue<float> s_masterVol {0.8f};
+    
+    // Cache de Parâmetros Secundários (Atualização por Bloco)
+    float cached_sawLevel = 1.0f;
+    float cached_pulseLevel = 0.5f;
+    float cached_subLevel = 0.2f;
+    float cached_noiseLevel = 0.0f;
+    
+    float cached_basePulseWidth = 0.5f;
+    float cached_pwmLfoAmount = 0.1f;
+    float cached_pwmLfoRate = 0.5f;
+    float cached_pwmEnvAmount = 0.2f;
+    
+    float cached_filterEnvAmount = 0.0f;
+    float cached_filterKeyboardTracking = 0.3f;
     
     core_dsp::gain::GainProcessor masterGain;
     
