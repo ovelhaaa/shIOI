@@ -54,19 +54,25 @@ Sh101AudioProcessorEditor::Sh101AudioProcessorEditor(Sh101AudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
     setLookAndFeel(&modernLookAndFeel);
-    setSize(1100, 600);
+    setSize(980, 550);
     
     // Setup Global & Arp
     setupButton(polyModeBtn, "polyMode", "Poly Mode");
     setupSlider(glideTimeSlider, "glideTime", "Glide Time");
     setupButton(arpEnabledBtn, "arpEnabled", "Arp On/Off");
     setupButton(arpHostSyncBtn, "arpHostSync", "Host Sync");
-    setupSlider(arpInternalBpmSlider, "arpInternalBpm", "Int. BPM");
+    
+    // Setup BPM Slider especificamente
+    addAndMakeVisible(arpInternalBpmSlider);
+    arpInternalBpmSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    arpInternalBpmSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false, 50, 20);
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "arpInternalBpm", arpInternalBpmSlider));
+    
     setupComboBox(arpModeBox, "arpMode", {"Up", "Down", "Up/Down", "Random"}, "Arp Mode");
     setupComboBox(arpSyncBox, "arpSync", {"1/4", "1/8", "1/16", "1/32"}, "Arp Sync");
     
     glideTimeSlider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xffffa500));
-    arpInternalBpmSlider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xffffa500));
+    arpInternalBpmSlider.setColour(juce::Slider::trackColourId, juce::Colour(0xffffa500));
 
     // Setup de todos os Sliders
     setupSlider(sawSlider, "sawLevel", "Saw Level");
@@ -157,23 +163,28 @@ void Sh101AudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff181818));
     
     auto area = getLocalBounds().reduced(15);
-    int boxWidth = (area.getWidth() - (15 * 4)) / 5;
     
-    auto globalArea = area.removeFromLeft(boxWidth);
-    area.removeFromLeft(15);
-    auto vcoArea = area.removeFromLeft(boxWidth);
-    area.removeFromLeft(15);
-    auto vcfArea = area.removeFromLeft(boxWidth);
-    area.removeFromLeft(15);
-    auto envArea = area.removeFromLeft(boxWidth);
-    area.removeFromLeft(15);
-    auto masterArea = area;
+    // Larguras manuais para as colunas
+    int vcoWidth = 200;
+    int vcfWidth = 140;
+    int envWidth = 140;
+    int masterWidth = 120;
     
-    drawSectionBackground(g, globalArea, "GLOBAL & ARP", juce::Colour(0xffffa500));
+    auto vcoArea = area.removeFromLeft(vcoWidth);
+    area.removeFromLeft(15);
+    auto vcfArea = area.removeFromLeft(vcfWidth);
+    area.removeFromLeft(15);
+    auto envArea = area.removeFromLeft(envWidth);
+    area.removeFromLeft(15);
+    auto masterArea = area.removeFromLeft(masterWidth);
+    area.removeFromLeft(15);
+    auto globalArea = area;
+    
     drawSectionBackground(g, vcoArea, "OSC & LFO", juce::Colour(0xff00d2ff));
     drawSectionBackground(g, vcfArea, "VCF FILTER", juce::Colour(0xff00ff88));
     drawSectionBackground(g, envArea, "ENVELOPES", juce::Colour(0xffff007f));
     drawSectionBackground(g, masterArea, "MASTER", juce::Colour(0xffff3333));
+    drawSectionBackground(g, globalArea, "GLOBAL & ARP", juce::Colour(0xffffa500));
     
     g.setColour(juce::Colours::grey);
     g.setFont(12.0f);
@@ -195,46 +206,41 @@ void Sh101AudioProcessorEditor::paint(juce::Graphics& g) {
 
 void Sh101AudioProcessorEditor::resized() {
     auto area = getLocalBounds().reduced(15);
-    int boxWidth = (area.getWidth() - (15 * 4)) / 5;
     
-    auto globalArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
+    int vcoWidth = 200;
+    int vcfWidth = 140;
+    int envWidth = 140;
+    int masterWidth = 120;
+    
+    auto vcoArea = area.removeFromLeft(vcoWidth).withTrimmedTop(45).reduced(10);
     area.removeFromLeft(15);
-    auto vcoArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
+    auto vcfArea = area.removeFromLeft(vcfWidth).withTrimmedTop(45).reduced(10);
     area.removeFromLeft(15);
-    auto vcfArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
+    auto envArea = area.removeFromLeft(envWidth).withTrimmedTop(45).reduced(10);
     area.removeFromLeft(15);
-    auto envArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
+    auto masterArea = area.removeFromLeft(masterWidth).withTrimmedTop(45).reduced(10);
     area.removeFromLeft(15);
-    auto masterArea = area.withTrimmedTop(45).reduced(10);
+    auto globalArea = area.withTrimmedTop(45).reduced(10);
     
     int knobSize = 65;
     
-    // GLOBAL & ARP
-    polyModeBtn.setBounds(globalArea.getX(), globalArea.getY(), globalArea.getWidth(), 24);
+    // VCO (2 colunas, 5 linhas) centralizado
+    int vcoStartX = vcoArea.getX() + (vcoArea.getWidth() - (knobSize * 2 + 10)) / 2;
+    int col1 = vcoStartX;
+    int col2 = vcoStartX + knobSize + 10;
     
-    glideTimeSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + 30, knobSize, knobSize);
+    sawSlider.setBounds(col1, vcoArea.getY(), knobSize, knobSize);
+    pulseSlider.setBounds(col2, vcoArea.getY(), knobSize, knobSize);
+    subSlider.setBounds(col1, vcoArea.getY() + knobSize + 30, knobSize, knobSize);
+    noiseSlider.setBounds(col2, vcoArea.getY() + knobSize + 30, knobSize, knobSize);
     
-    arpEnabledBtn.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 40, globalArea.getWidth(), 24);
-    arpHostSyncBtn.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 65, globalArea.getWidth(), 24);
+    pwSlider.setBounds(col1, vcoArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
+    pwmEnvAmtSlider.setBounds(col2, vcoArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
     
-    arpInternalBpmSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + knobSize + 95, knobSize, knobSize);
+    pwmLfoAmtSlider.setBounds(col1, vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize);
+    lfoPitchAmtSlider.setBounds(col2, vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize); 
     
-    arpModeBox.setBounds(globalArea.getX() + 10, globalArea.getY() + (knobSize * 2) + 110, globalArea.getWidth() - 20, 24);
-    arpSyncBox.setBounds(globalArea.getX() + 10, globalArea.getY() + (knobSize * 2) + 160, globalArea.getWidth() - 20, 24);
-    
-    // VCO (2 colunas, 5 linhas)
-    sawSlider.setBounds(vcoArea.getX(), vcoArea.getY(), knobSize, knobSize);
-    pulseSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY(), knobSize, knobSize);
-    subSlider.setBounds(vcoArea.getX(), vcoArea.getY() + knobSize + 30, knobSize, knobSize);
-    noiseSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + knobSize + 30, knobSize, knobSize);
-    
-    pwSlider.setBounds(vcoArea.getX(), vcoArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
-    pwmEnvAmtSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
-    
-    pwmLfoAmtSlider.setBounds(vcoArea.getX(), vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize);
-    lfoPitchAmtSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize); // Vibrato fica do lado do PWM Amt
-    
-    pwmLfoRateSlider.setBounds(vcoArea.getX() + (vcoArea.getWidth() - knobSize)/2, vcoArea.getY() + (knobSize + 30) * 4, knobSize, knobSize); // LFO Rate centralizado no fundo
+    pwmLfoRateSlider.setBounds(vcoArea.getX() + (vcoArea.getWidth() - knobSize)/2, vcoArea.getY() + (knobSize + 30) * 4, knobSize, knobSize);
 
     // VCF
     cutoffSlider.setBounds(vcfArea.getX() + (vcfArea.getWidth() - knobSize)/2, vcfArea.getY(), knobSize, knobSize);
@@ -250,4 +256,17 @@ void Sh101AudioProcessorEditor::resized() {
 
     // MASTER
     masterVolSlider.setBounds(masterArea.getX() + (masterArea.getWidth() - knobSize)/2, masterArea.getY(), knobSize, knobSize);
+    
+    // GLOBAL & ARP (Agrupado com cuidado para não sobrepor)
+    polyModeBtn.setBounds(globalArea.getX(), globalArea.getY(), globalArea.getWidth(), 24);
+    
+    glideTimeSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + 30, knobSize, knobSize);
+    
+    arpEnabledBtn.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 50, globalArea.getWidth(), 24);
+    arpHostSyncBtn.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 80, globalArea.getWidth(), 24);
+    
+    arpInternalBpmSlider.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 110, globalArea.getWidth(), 24);
+    
+    arpModeBox.setBounds(globalArea.getX() + 10, globalArea.getY() + knobSize + 160, globalArea.getWidth() - 20, 24);
+    arpSyncBox.setBounds(globalArea.getX() + 10, globalArea.getY() + knobSize + 210, globalArea.getWidth() - 20, 24);
 }
