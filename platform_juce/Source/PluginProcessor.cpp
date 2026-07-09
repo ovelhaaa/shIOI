@@ -10,6 +10,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sh101AudioProcessor::createP
     
     // Parâmetros do Arpeggiator
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("arpEnabled", 1), "Arp Enabled", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("arpHostSync", 1), "Host Sync", true));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("arpInternalBpm", 1), "Internal BPM", 20.0f, 300.0f, 120.0f));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("arpMode", 1), "Arp Mode", juce::StringArray{"Up", "Down", "Up/Down", "Random"}, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("arpSync", 1), "Arp Sync", juce::StringArray{"1/4", "1/8", "1/16", "1/32"}, 1));
     
@@ -142,6 +144,8 @@ void Sh101AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     cached_lfoPitchAmount = apvts.getRawParameterValue("lfoPitchAmount")->load();
     
     cached_arpEnabled = apvts.getRawParameterValue("arpEnabled")->load() > 0.5f;
+    cached_arpHostSync = apvts.getRawParameterValue("arpHostSync")->load() > 0.5f;
+    cached_arpInternalBpm = apvts.getRawParameterValue("arpInternalBpm")->load();
     cached_arpMode = (int)apvts.getRawParameterValue("arpMode")->load();
     cached_arpSync = (int)apvts.getRawParameterValue("arpSync")->load();
     
@@ -198,10 +202,12 @@ void Sh101AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     }
     
     // Configurações do Clock / Arp Tick
-    double bpm = 120.0;
-    if (auto* ph = getPlayHead()) {
-        if (auto pos = ph->getPosition()) {
-            if (pos->getBpm().hasValue()) bpm = *pos->getBpm();
+    double bpm = cached_arpInternalBpm;
+    if (cached_arpHostSync) {
+        if (auto* ph = getPlayHead()) {
+            if (auto pos = ph->getPosition()) {
+                if (pos->getBpm().hasValue()) bpm = *pos->getBpm();
+            }
         }
     }
     

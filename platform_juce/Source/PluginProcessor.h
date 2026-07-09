@@ -146,6 +146,8 @@ private:
     float cached_lfoPitchAmount = 0.0f;
     
     bool cached_arpEnabled = false;
+    bool cached_arpHostSync = true;
+    float cached_arpInternalBpm = 120.0f;
     int cached_arpMode = 0;
     int cached_arpSync = 1; // 1 = 1/8 note
     bool cached_polyMode = true;

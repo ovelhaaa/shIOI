@@ -23,9 +23,13 @@ private:
     Sh101AudioProcessor& audioProcessor;
     ModernLookAndFeel modernLookAndFeel;
     
-    // Sliders - GLOBAL & ARP
-    juce::Slider polyModeSlider, glideTimeSlider;
-    juce::Slider arpEnabledSlider, arpModeSlider, arpSyncSlider;
+    // Sliders & Buttons - GLOBAL & ARP
+    juce::ToggleButton polyModeBtn{"Polyphonic"};
+    juce::ToggleButton arpEnabledBtn{"Arp On"};
+    juce::ToggleButton arpHostSyncBtn{"Host Sync"};
+    juce::ComboBox arpModeBox, arpSyncBox;
+    juce::Slider glideTimeSlider;
+    juce::Slider arpInternalBpmSlider;
     
     // Sliders - VCO & PWM & Vibrato
     juce::Slider sawSlider, pulseSlider, subSlider, noiseSlider;
@@ -42,10 +46,18 @@ private:
     juce::Slider masterVolSlider;
     
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-    std::vector<std::unique_ptr<SliderAttachment>> attachments;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+    
+    std::vector<std::unique_ptr<SliderAttachment>> sliderAttachments;
+    std::vector<std::unique_ptr<ButtonAttachment>> buttonAttachments;
+    std::vector<std::unique_ptr<ComboBoxAttachment>> comboAttachments;
+    
     std::vector<juce::Slider*> allSliders;
     
     void setupSlider(juce::Slider& slider, const juce::String& paramID, const juce::String& name);
+    void setupButton(juce::ToggleButton& button, const juce::String& paramID, const juce::String& name);
+    void setupComboBox(juce::ComboBox& box, const juce::String& paramID, const juce::StringArray& items, const juce::String& name);
     void drawSectionBackground(juce::Graphics& g, juce::Rectangle<int> area, const juce::String& title, juce::Colour accentColour);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Sh101AudioProcessorEditor)

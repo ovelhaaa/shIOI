@@ -57,16 +57,16 @@ Sh101AudioProcessorEditor::Sh101AudioProcessorEditor(Sh101AudioProcessor& p)
     setSize(1100, 600);
     
     // Setup Global & Arp
-    setupSlider(polyModeSlider, "polyMode", "Poly Mode");
+    setupButton(polyModeBtn, "polyMode", "Poly Mode");
     setupSlider(glideTimeSlider, "glideTime", "Glide Time");
-    setupSlider(arpEnabledSlider, "arpEnabled", "Arp On/Off");
-    setupSlider(arpModeSlider, "arpMode", "Arp Mode");
-    setupSlider(arpSyncSlider, "arpSync", "Arp Sync");
+    setupButton(arpEnabledBtn, "arpEnabled", "Arp On/Off");
+    setupButton(arpHostSyncBtn, "arpHostSync", "Host Sync");
+    setupSlider(arpInternalBpmSlider, "arpInternalBpm", "Int. BPM");
+    setupComboBox(arpModeBox, "arpMode", {"Up", "Down", "Up/Down", "Random"}, "Arp Mode");
+    setupComboBox(arpSyncBox, "arpSync", {"1/4", "1/8", "1/16", "1/32"}, "Arp Sync");
     
-    juce::Colour globalColour = juce::Colour(0xffffa500); // Laranja
-    for (auto* s : {&polyModeSlider, &glideTimeSlider, &arpEnabledSlider, &arpModeSlider, &arpSyncSlider}) {
-        s->setColour(juce::Slider::rotarySliderFillColourId, globalColour);
-    }
+    glideTimeSlider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xffffa500));
+    arpInternalBpmSlider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xffffa500));
 
     // Setup de todos os Sliders
     setupSlider(sawSlider, "sawLevel", "Saw Level");
@@ -120,7 +120,20 @@ void Sh101AudioProcessorEditor::setupSlider(juce::Slider& slider, const juce::St
     addAndMakeVisible(slider);
     allSliders.push_back(&slider);
     
-    attachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramID, slider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramID, slider));
+}
+
+void Sh101AudioProcessorEditor::setupButton(juce::ToggleButton& button, const juce::String& paramID, const juce::String& name) {
+    addAndMakeVisible(button);
+    button.setButtonText(name);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.apvts, paramID, button));
+}
+
+void Sh101AudioProcessorEditor::setupComboBox(juce::ComboBox& box, const juce::String& paramID, const juce::StringArray& items, const juce::String& name) {
+    addAndMakeVisible(box);
+    box.addItemList(items, 1);
+    box.setTooltip(name);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, paramID, box));
 }
 
 void Sh101AudioProcessorEditor::drawSectionBackground(juce::Graphics& g, juce::Rectangle<int> area, const juce::String& title, juce::Colour accentColour) {
@@ -165,10 +178,18 @@ void Sh101AudioProcessorEditor::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::grey);
     g.setFont(12.0f);
     
+    // Labels dos sliders
     for (auto* s : allSliders) {
         auto bounds = s->getBounds();
         juce::String text = s->getTooltip();
         g.drawText(text, bounds.getX() - 10, bounds.getBottom() + 2, bounds.getWidth() + 20, 15, juce::Justification::centred, false);
+    }
+    
+    // Labels dos ComboBoxes
+    for (auto* c : {&arpModeBox, &arpSyncBox}) {
+        auto bounds = c->getBounds();
+        juce::String text = c->getTooltip();
+        g.drawText(text, bounds.getX() - 10, bounds.getY() - 15, bounds.getWidth() + 20, 15, juce::Justification::centred, false);
     }
 }
 
@@ -189,11 +210,17 @@ void Sh101AudioProcessorEditor::resized() {
     int knobSize = 65;
     
     // GLOBAL & ARP
-    polyModeSlider.setBounds(globalArea.getX(), globalArea.getY(), knobSize, knobSize);
-    glideTimeSlider.setBounds(globalArea.getX() + knobSize + 10, globalArea.getY(), knobSize, knobSize);
-    arpEnabledSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + knobSize + 30, knobSize, knobSize);
-    arpModeSlider.setBounds(globalArea.getX(), globalArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
-    arpSyncSlider.setBounds(globalArea.getX() + knobSize + 10, globalArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
+    polyModeBtn.setBounds(globalArea.getX(), globalArea.getY(), globalArea.getWidth(), 24);
+    
+    glideTimeSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + 30, knobSize, knobSize);
+    
+    arpEnabledBtn.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 40, globalArea.getWidth(), 24);
+    arpHostSyncBtn.setBounds(globalArea.getX(), globalArea.getY() + knobSize + 65, globalArea.getWidth(), 24);
+    
+    arpInternalBpmSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + knobSize + 95, knobSize, knobSize);
+    
+    arpModeBox.setBounds(globalArea.getX() + 10, globalArea.getY() + (knobSize * 2) + 110, globalArea.getWidth() - 20, 24);
+    arpSyncBox.setBounds(globalArea.getX() + 10, globalArea.getY() + (knobSize * 2) + 160, globalArea.getWidth() - 20, 24);
     
     // VCO (2 colunas, 5 linhas)
     sawSlider.setBounds(vcoArea.getX(), vcoArea.getY(), knobSize, knobSize);
