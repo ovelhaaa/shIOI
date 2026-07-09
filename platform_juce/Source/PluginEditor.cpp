@@ -54,7 +54,19 @@ Sh101AudioProcessorEditor::Sh101AudioProcessorEditor(Sh101AudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
     setLookAndFeel(&modernLookAndFeel);
-    setSize(900, 500);
+    setSize(1100, 600);
+    
+    // Setup Global & Arp
+    setupSlider(polyModeSlider, "polyMode", "Poly Mode");
+    setupSlider(glideTimeSlider, "glideTime", "Glide Time");
+    setupSlider(arpEnabledSlider, "arpEnabled", "Arp On/Off");
+    setupSlider(arpModeSlider, "arpMode", "Arp Mode");
+    setupSlider(arpSyncSlider, "arpSync", "Arp Sync");
+    
+    juce::Colour globalColour = juce::Colour(0xffffa500); // Laranja
+    for (auto* s : {&polyModeSlider, &glideTimeSlider, &arpEnabledSlider, &arpModeSlider, &arpSyncSlider}) {
+        s->setColour(juce::Slider::rotarySliderFillColourId, globalColour);
+    }
 
     // Setup de todos os Sliders
     setupSlider(sawSlider, "sawLevel", "Saw Level");
@@ -64,10 +76,11 @@ Sh101AudioProcessorEditor::Sh101AudioProcessorEditor(Sh101AudioProcessor& p)
     setupSlider(pwSlider, "pulseWidth", "Pulse Width");
     setupSlider(pwmEnvAmtSlider, "pwmEnvAmount", "PWM Env Amt");
     setupSlider(pwmLfoAmtSlider, "pwmLfoAmount", "PWM LFO Amt");
-    setupSlider(pwmLfoRateSlider, "pwmLfoRate", "PWM LFO Rate");
+    setupSlider(pwmLfoRateSlider, "pwmLfoRate", "LFO Rate");
+    setupSlider(lfoPitchAmtSlider, "lfoPitchAmount", "Vibrato Amt");
     
     juce::Colour vcoColour = juce::Colour(0xff00d2ff);
-    for (auto* s : {&sawSlider, &pulseSlider, &subSlider, &noiseSlider, &pwSlider, &pwmLfoAmtSlider, &pwmLfoRateSlider, &pwmEnvAmtSlider}) {
+    for (auto* s : {&sawSlider, &pulseSlider, &subSlider, &noiseSlider, &pwSlider, &pwmLfoAmtSlider, &pwmLfoRateSlider, &pwmEnvAmtSlider, &lfoPitchAmtSlider}) {
         s->setColour(juce::Slider::rotarySliderFillColourId, vcoColour);
     }
 
@@ -131,8 +144,10 @@ void Sh101AudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff181818));
     
     auto area = getLocalBounds().reduced(15);
-    int boxWidth = (area.getWidth() - 45) / 4;
+    int boxWidth = (area.getWidth() - (15 * 4)) / 5;
     
+    auto globalArea = area.removeFromLeft(boxWidth);
+    area.removeFromLeft(15);
     auto vcoArea = area.removeFromLeft(boxWidth);
     area.removeFromLeft(15);
     auto vcfArea = area.removeFromLeft(boxWidth);
@@ -141,7 +156,8 @@ void Sh101AudioProcessorEditor::paint(juce::Graphics& g) {
     area.removeFromLeft(15);
     auto masterArea = area;
     
-    drawSectionBackground(g, vcoArea, "OSC & PWM", juce::Colour(0xff00d2ff));
+    drawSectionBackground(g, globalArea, "GLOBAL & ARP", juce::Colour(0xffffa500));
+    drawSectionBackground(g, vcoArea, "OSC & LFO", juce::Colour(0xff00d2ff));
     drawSectionBackground(g, vcfArea, "VCF FILTER", juce::Colour(0xff00ff88));
     drawSectionBackground(g, envArea, "ENVELOPES", juce::Colour(0xffff007f));
     drawSectionBackground(g, masterArea, "MASTER", juce::Colour(0xffff3333));
@@ -158,8 +174,10 @@ void Sh101AudioProcessorEditor::paint(juce::Graphics& g) {
 
 void Sh101AudioProcessorEditor::resized() {
     auto area = getLocalBounds().reduced(15);
-    int boxWidth = (area.getWidth() - 45) / 4;
+    int boxWidth = (area.getWidth() - (15 * 4)) / 5;
     
+    auto globalArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
+    area.removeFromLeft(15);
     auto vcoArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
     area.removeFromLeft(15);
     auto vcfArea = area.removeFromLeft(boxWidth).withTrimmedTop(45).reduced(10);
@@ -170,15 +188,26 @@ void Sh101AudioProcessorEditor::resized() {
     
     int knobSize = 65;
     
-    // VCO (2 colunas, 4 linhas)
+    // GLOBAL & ARP
+    polyModeSlider.setBounds(globalArea.getX(), globalArea.getY(), knobSize, knobSize);
+    glideTimeSlider.setBounds(globalArea.getX() + knobSize + 10, globalArea.getY(), knobSize, knobSize);
+    arpEnabledSlider.setBounds(globalArea.getX() + (globalArea.getWidth() - knobSize)/2, globalArea.getY() + knobSize + 30, knobSize, knobSize);
+    arpModeSlider.setBounds(globalArea.getX(), globalArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
+    arpSyncSlider.setBounds(globalArea.getX() + knobSize + 10, globalArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
+    
+    // VCO (2 colunas, 5 linhas)
     sawSlider.setBounds(vcoArea.getX(), vcoArea.getY(), knobSize, knobSize);
     pulseSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY(), knobSize, knobSize);
     subSlider.setBounds(vcoArea.getX(), vcoArea.getY() + knobSize + 30, knobSize, knobSize);
     noiseSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + knobSize + 30, knobSize, knobSize);
+    
     pwSlider.setBounds(vcoArea.getX(), vcoArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
     pwmEnvAmtSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + (knobSize + 30) * 2, knobSize, knobSize);
+    
     pwmLfoAmtSlider.setBounds(vcoArea.getX(), vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize);
-    pwmLfoRateSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize);
+    lfoPitchAmtSlider.setBounds(vcoArea.getX() + knobSize + 10, vcoArea.getY() + (knobSize + 30) * 3, knobSize, knobSize); // Vibrato fica do lado do PWM Amt
+    
+    pwmLfoRateSlider.setBounds(vcoArea.getX() + (vcoArea.getWidth() - knobSize)/2, vcoArea.getY() + (knobSize + 30) * 4, knobSize, knobSize); // LFO Rate centralizado no fundo
 
     // VCF
     cutoffSlider.setBounds(vcfArea.getX() + (vcfArea.getWidth() - knobSize)/2, vcfArea.getY(), knobSize, knobSize);

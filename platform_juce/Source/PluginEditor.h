@@ -23,9 +23,14 @@ private:
     Sh101AudioProcessor& audioProcessor;
     ModernLookAndFeel modernLookAndFeel;
     
-    // Sliders - VCO
+    // Sliders - GLOBAL & ARP
+    juce::Slider polyModeSlider, glideTimeSlider;
+    juce::Slider arpEnabledSlider, arpModeSlider, arpSyncSlider;
+    
+    // Sliders - VCO & PWM & Vibrato
     juce::Slider sawSlider, pulseSlider, subSlider, noiseSlider;
     juce::Slider pwSlider, pwmLfoAmtSlider, pwmLfoRateSlider, pwmEnvAmtSlider;
+    juce::Slider lfoPitchAmtSlider; // Vibrato
     
     // Sliders - VCF
     juce::Slider cutoffSlider, resSlider, filterEnvAmtSlider, filterKbdSlider;

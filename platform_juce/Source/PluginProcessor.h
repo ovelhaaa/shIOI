@@ -8,6 +8,7 @@
 #include "../core_dsp/Filters.h"
 #include "../core_dsp/Envelope.h"
 #include "../core_dsp/Gain.h"
+#include "../core_dsp/Arpeggiator.h"
 
 // NOTA SOBRE O SampleType:
 // Como não estamos definindo a macro 'PLATFORM_PICO' no CMakeLists deste projeto JUCE,
@@ -57,8 +58,9 @@ private:
         bool isActive = false;
         float velocity = 0.0f;
         
-        // Smoothers nativos do JUCE para a velocidade
+        // Smoothers nativos do JUCE para a velocidade e frequência (Glide)
         juce::LinearSmoothedValue<float> smoothedVelocity {0.0f};
+        juce::LinearSmoothedValue<float> smoothedFreq {440.0f};
 
         void init(float sampleRate) {
             sawOsc.setSampleRate(sampleRate);
@@ -67,23 +69,38 @@ private:
             envelope.init(sampleRate);
             smoothedVelocity.reset(sampleRate, 0.005);
             smoothedVelocity.setCurrentAndTargetValue(0.0f);
+            smoothedFreq.reset(sampleRate, 0.005);
+            smoothedFreq.setCurrentAndTargetValue(440.0f);
         }
         
-        void noteOn(int note, float vel, float freq) {
+        void noteOn(int note, float vel, float freq, float glideTimeSeconds, float sampleRate) {
             midiNote = note;
             isActive = true;
             velocity = vel;
             smoothedVelocity.setTargetValue(vel);
             
-            sawOsc.resetPhase();
-            pulseOsc.resetPhase();
-            subOsc.resetPhase();
-            
-            sawOsc.setFrequency(freq);
-            pulseOsc.setFrequency(freq);
-            subOsc.setFrequency(freq * 0.5f);
-            
+            // Só reseta a fase se não estivermos fazendo portamento/glide
+            if (glideTimeSeconds <= 0.001f) {
+                sawOsc.resetPhase();
+                pulseOsc.resetPhase();
+                subOsc.resetPhase();
+                
+                smoothedFreq.reset(sampleRate, 0.001); // Instantâneo
+                smoothedFreq.setCurrentAndTargetValue(freq);
+            } else {
+                smoothedFreq.reset(sampleRate, glideTimeSeconds);
+                smoothedFreq.setTargetValue(freq);
+            }
             envelope.noteOn();
+        }
+        
+        void updateFrequency(float vibratoMod) {
+            float baseFreq = smoothedFreq.getNextValue();
+            float finalFreq = baseFreq + (baseFreq * vibratoMod);
+            
+            sawOsc.setFrequency(finalFreq);
+            pulseOsc.setFrequency(finalFreq);
+            subOsc.setFrequency(finalFreq * 0.5f);
         }
         
         void noteOff() {
@@ -123,6 +140,22 @@ private:
     
     float cached_filterEnvAmount = 0.0f;
     float cached_filterKeyboardTracking = 0.3f;
+    
+    // Novos caches: Glide, Vibrato e Arpeggiator
+    float cached_glideTime = 0.0f;
+    float cached_lfoPitchAmount = 0.0f;
+    
+    bool cached_arpEnabled = false;
+    int cached_arpMode = 0;
+    int cached_arpSync = 1; // 1 = 1/8 note
+    bool cached_polyMode = true;
+    
+    // Motor do Arpeggiator e controle de tempo
+    core_dsp::arpeggiator::Arpeggiator arp;
+    double currentArpPhase = 0.0;
+    int currentArpNote = -1;
+    
+    double currentSampleRate = 44100.0;
     
     core_dsp::gain::GainProcessor masterGain;
     
